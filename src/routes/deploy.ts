@@ -66,18 +66,56 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
         repoPath,
         'docker-compose.yml'
       )} --profile sequencer up -d --build`,
-      { cwd: repoPath },
-      (error, stdout, stderr) => {
-        if (error) {
-          console.error(`exec error: ${error}`);
-          return res.status(500).json({ message: `Error: ${error.message}` });
-        }
-        res.status(200).json({ message: 'Docker Compose started successfully', stdout, stderr });
-      }
+      { cwd: repoPath }
     );
+
+    // Capture stdout (standard output)
+    deployExec.rollup.stdout.on('data', async (data) => {
+      await prisma.logging.create({
+        data: {
+          message: data.toString(),
+          service: 'rollup',
+        },
+      });
+    });
+
+    // Capture stderr (error output)
+    deployExec.rollup.stderr.on('data', async (data) => {
+      await prisma.logging.create({
+        data: {
+          message: data.toString(),
+          service: 'rollup',
+        },
+      });
+    });
+
+    // Handle process close event
+    deployExec.rollup.on('close', async (code) => {
+      await prisma.logging.create({
+        data: {
+          message: `Process exited with code ${code}`,
+          service: 'rollup',
+        },
+      });
+    });
+
+    return res.status(200).json({ message: 'Deployment started' });
   } catch (error) {
     console.error(`Error during deployment: ${(error as Error).message}`);
+
+    return res.status(500).json({ message: 'Deployment failed' });
   }
+});
+
+router.get('/rollup/log', requireJWTAuth, async (req, res) => {
+  const logs = await prisma.logging.findMany({
+    where: {
+      service: 'rollup',
+    },
+  });
+  const logMessages = logs.map((log) => log.message).join('');
+
+  return res.status(200).json({ message: logMessages });
 });
 
 export default router;

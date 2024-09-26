@@ -1,6 +1,6 @@
 // src/app.ts
 
-import express, { Request, Response } from 'express';
+import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import bodyParser from 'body-parser';
@@ -12,10 +12,8 @@ import { PrismaClient } from '@prisma/client';
 import { connectPrisma, disconnectPrisma } from './core/prisma';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { deployExec } from './core/deployment';
 
 const app = express();
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
@@ -44,47 +42,9 @@ app.use('/api/deploy', deploy);
 const serverApp = createServer(app);
 export const wss = new WebSocketServer({ server: serverApp });
 
-wss.on('connection', (ws) => {
-  if (deployExec.rollup) {
-    // Send real-time logs to the WebSocket client
-    deployExec.rollup.stdout.on('data', (data) => {
-      ws.send(data.toString());
-    });
-
-    deployExec.rollup.stderr.on('data', (data) => {
-      ws.send(data.toString());
-    });
-
-    deployExec.rollup.on('close', (code) => {
-      ws.send(`Process exited with code ${code}`);
-      ws.close();
-    });
-
-    ws.on('close', () => {
-      console.log(
-        'WebSocket connection closed. Docker process will continue running.'
-      );
-    });
-  } else {
-    ws.send('No active process to show logs for.');
-    ws.close();
-  }
-});
-
 const server = app.listen(PORT, async () => {
   await connectPrisma(); // Ensure that Prisma is connected when starting the server
   console.log(`Server running on port ${PORT}`);
-});
-
-server.on('upgrade', (req, socket, head) => {
-  console.log('someone connected!');
-  if (req.url === '/logs') {
-    wss.handleUpgrade(req, socket, head, (ws) => {
-      wss.emit('connection', ws, req);
-    });
-  } else {
-    socket.destroy();
-  }
 });
 
 // Gracefully shutdown Prisma when server is terminated
