@@ -5,7 +5,6 @@ import jwt from 'jwt-simple';
 const router = express.Router();
 
 router.post('/login', (req, res, next) => {
-  console.log(env);
   if (req.body.username === env.USER && req.body.password === env.PASSWORD) {
     // Generate a JWT token
     const payload = {
