@@ -8,9 +8,10 @@ import bodyParser from 'body-parser';
 import fs from 'fs';
 import healthz from './routes/healthz';
 import auth from './routes/auth';
+import git from './routes/git';
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -32,5 +33,6 @@ app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
 // router
 app.use('/api/healthz', healthz);
 app.use('/api/auth', auth);
+app.use('/api/git', git);
 
 app.listen(PORT, () => console.log(`server running on ${PORT}`));
