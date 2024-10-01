@@ -9,9 +9,10 @@ import prisma from '../core/prisma';
 import { mergeDict } from '../utils';
 import { rollupConfig } from '../constant/rollup.config';
 import { deployExec } from '../core/deployment';
+import Docker from 'dockerode';
 
 const git: SimpleGit = simpleGit();
-
+const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 const router = express.Router();
 
 const repoUrl: string = 'https://github.com/upnodedev/opstack-compose.git';
@@ -116,6 +117,63 @@ router.get('/rollup/log', requireJWTAuth, async (req, res) => {
   const logMessages = logs.map((log) => log.message).join('');
 
   return res.status(200).json({ message: logMessages });
+});
+
+router.get('/log/:service', requireJWTAuth, async (req, res) => {
+  const service = req.params.service;
+
+  try {
+    docker.listContainers({ all: true }, (err, containers) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Error fetching logs' });
+      }
+
+      const containerAll = containers.map((container) => {
+        return {
+          Id: container.Id,
+          Names: JSON.stringify(container.Names),
+        };
+      });
+
+      const container = containers.find((container) => {
+        return JSON.stringify(container.Names).includes(service);
+      });
+
+      if (!container) {
+        return res.status(404).json({ message: 'Service not found' });
+      }
+
+      const containerInstance = docker.getContainer(container.Id);
+
+      containerInstance.logs(
+        {
+          follow: true,
+          stdout: true,
+          stderr: true,
+        },
+        (err, stream) => {
+          if (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Error fetching logs' });
+          }
+
+          stream.on('data', (data) => {
+            res.status(200).json({
+              message: data.toString(),
+            });
+          });
+
+          stream.on('end', () => {
+            res.end();
+          });
+        }
+      );
+    });
+  } catch (error) {
+    console.error(`Error fetching logs: ${(error as Error).message}`);
+    return res.status(500).json({ message: 'Error fetching logs' });
+  }
 });
 
 export default router;
