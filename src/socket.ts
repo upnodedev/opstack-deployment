@@ -21,8 +21,6 @@ export const initWebSocketServer = (server: any) => {
   wss.on('connection', (ws: WebSocket, req) => {
     const token = req.url?.split('token=')[1];
 
-    console.log({ token });
-
     if (!token) {
       ws.send('No token provided');
       ws.close();
@@ -45,28 +43,57 @@ export const initWebSocketServer = (server: any) => {
       ws.on('message', async (containerName: string) => {
         console.log(`Streaming logs for container: ${containerName}`);
 
-        const container = docker.getContainer(containerName);
+        let containerId = null;
 
-        try {
-          // Stream logs from the Docker container
-          const logStream = await container.logs({
-            follow: true,
-            stdout: true,
-            stderr: true,
-          });
-
-          logStream.on('data', (chunk) => {
-            ws.send(chunk.toString());
-          });
-
-          logStream.on('end', () => {
-            ws.send('Log stream ended.');
+        docker.listContainers({ all: true }, async(err, containers) => {
+          if (err) {
+            console.error(err);
+            ws.send('Error fetching logs');
             ws.close();
+            return;
+          }
+
+          const containerAll = containers.map((container) => {
+            return {
+              Id: container.Id,
+              Names: JSON.stringify(container.Names),
+            };
           });
-        } catch (error) {
-          console.error('Error streaming logs:', error.message);
-          ws.send('Error streaming logs.');
-        }
+
+          const containerFind = containerAll.find((container) => {
+            return JSON.stringify(container.Names).includes(containerName);
+          });
+
+          if (!containerFind) {
+            ws.send(`Service not found ${JSON.stringify(containerAll)}`);
+            ws.close();
+            return;
+          }
+
+          containerId = containerFind.Id;
+          const container = docker.getContainer(containerId);
+
+          try {
+            // Stream logs from the Docker container
+            const logStream = await container.logs({
+              follow: true,
+              stdout: true,
+              stderr: true,
+            });
+
+            logStream.on('data', (chunk) => {
+              ws.send(chunk.toString());
+            });
+
+            logStream.on('end', () => {
+              ws.send('Log stream ended.');
+              ws.close();
+            });
+          } catch (error) {
+            console.error('Error streaming logs:', error.message);
+            ws.send('Error streaming logs.');
+          }
+        });
       });
     } catch (error) {
       ws.send('Invalid token');
