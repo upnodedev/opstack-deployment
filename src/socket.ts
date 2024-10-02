@@ -12,6 +12,8 @@ interface JwtPayload {
   exp: number;
 }
 
+let logStream: any;
+
 // WebSocket server
 export const initWebSocketServer = (server: any) => {
   console.log('Initializing WebSocket server...');
@@ -45,7 +47,7 @@ export const initWebSocketServer = (server: any) => {
 
         let containerId = null;
 
-        docker.listContainers({ all: true }, async(err, containers) => {
+        docker.listContainers({ all: true }, async (err, containers) => {
           if (err) {
             console.error(err);
             ws.send('Error fetching logs');
@@ -66,7 +68,7 @@ export const initWebSocketServer = (server: any) => {
 
           if (!containerFind) {
             ws.send(`Service not found ${JSON.stringify(containerAll)}`);
-            ws.close();
+            // ws.close();
             return;
           }
 
@@ -75,7 +77,7 @@ export const initWebSocketServer = (server: any) => {
 
           try {
             // Stream logs from the Docker container
-            const logStream = await container.logs({
+            logStream = await container.logs({
               follow: true,
               stdout: true,
               stderr: true,
@@ -94,6 +96,13 @@ export const initWebSocketServer = (server: any) => {
             ws.send('Error streaming logs.');
           }
         });
+      });
+
+      ws.on('close', () => {
+        console.log('WebSocket connection closed.');
+        if (logStream) {
+          logStream.destroy();
+        }
       });
     } catch (error) {
       ws.send('Invalid token');

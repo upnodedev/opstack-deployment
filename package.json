@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "nodemon",
     "build": "rimraf dist && tsc",
-    "server": "node dist/server.js"
+    "start": "node dist/index.js",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate"
   },
   "keywords": [],
   "author": "",

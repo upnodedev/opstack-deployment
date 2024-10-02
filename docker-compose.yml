@@ -18,6 +18,40 @@ services:
       - '5432:5432'
     networks:
       - mynetwork
+  backend-main:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - '3010:3010'
+    networks:
+      - mynetwork
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      - db
+    command: >
+      sh -c "
+      npx prisma migrate deploy &&
+      npm run start"
+  frontend-main:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: unless-stopped
+    ports:
+      - '3002:3000'
+    networks:
+      - mynetwork
+    depends_on:
+      - backend-main
+    environment:
+      - API_ENDPOINT=http://backend-main:3010
 
 networks:
   mynetwork:
