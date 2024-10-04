@@ -1,4 +1,4 @@
-import { disconnectPrisma } from "./core/prisma";
+import { connectPrisma, disconnectPrisma } from "./core/prisma";
 import app from "./server";
 import http from 'http';
 import { initWebSocketServer } from "./socket";
@@ -21,6 +21,8 @@ async function gracefulShutdown() {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
+  // test prisma connection
+  connectPrisma();
   console.log(`Server running on port ${PORT}`);
 });
 
@@ -29,5 +31,6 @@ process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
 process.on('uncaughtException', async (err) => {
   console.error('Uncaught Exception: ', err);
+  await disconnectPrisma();
   await gracefulShutdown();
 });
