@@ -13,11 +13,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum EnumStatus {
+  BUILDING
+  UP
+  DOWN
+  FAILED
+  UNKNOWN
+}
+
 model Service {
   id          Int   @id @default(autoincrement())
   name        String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  status      EnumStatus @default(UNKNOWN)
 
   // Relation
   config      Config[]
