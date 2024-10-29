@@ -18,3 +18,11 @@ export const replaceEnv = (old: string, newEnv: Record<string, any>) => {
   }
   return res;
 };
+
+export const createNewEnv = (newEnv: Record<string, any>) => {
+  let res = '';
+  for (const key in newEnv) {
+    res += `${key}=${newEnv[key]}\n`;
+  }
+  return res;
+};

@@ -22,6 +22,7 @@ export async function deployService(
   name: 'rollup' | 'blockscout' | 'bridge',
   pathSrc: string,
   composeFile: string,
+  hasEnv: boolean,
   oldEnv: Record<string, any>,
   newEnv: Record<string, any>,
   onClose: (...args: any[]) => any
@@ -47,26 +48,28 @@ export async function deployService(
     },
   });
 
-  const env = mergeDict(oldEnv, newEnv);
-
-  // save env to database
-  await prisma.config.createMany({
-    data: Object.keys(env).map((key) => ({
-      key,
-      value: {
-        value: env[key],
-      },
-      serviceId: serviceCreate.id,
-    })),
-  });
+  try {
+    if (hasEnv) {
+      const env = mergeDict(oldEnv, newEnv);
+      await prisma.config.createMany({
+        data: Object.keys(env).map((key) => ({
+          key,
+          value: {
+            value: env[key],
+          },
+          serviceId: serviceCreate.id,
+        })),
+      });
+      createEnvFile(env, pathSrc);
+    }
+  } catch (error) {
+    return {
+      message: `Error during set ENV: ${name} : ${(error as Error).message}`,
+      isSuccess: false,
+    };
+  }
 
   try {
-    // delete the existing directory
-    if (fs.existsSync(pathSrc)) {
-      fs.rmdirSync(pathSrc, { recursive: true });
-    }
-
-    createEnvFile(env, pathSrc);
     deployExec[name] = exec(
       `docker-compose -f ${path.join(
         pathSrc,

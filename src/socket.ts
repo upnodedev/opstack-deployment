@@ -2,6 +2,8 @@ import WebSocket, { Server } from 'ws';
 import Docker from 'dockerode';
 import jwt from 'jwt-simple';
 import env from './utils/env';
+import { ChildProcess, exec } from 'child_process';
+import path from 'path';
 
 // Initialize Dockerode
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
@@ -47,65 +49,103 @@ export const initWebSocketServer = (server: any) => {
 
         let containerId = null;
 
-        docker.listContainers({ all: true }, async (err, containers) => {
-          if (err) {
-            console.error(err);
-            ws.send('Error fetching logs');
-            ws.close();
-            return;
-          }
-
-          const containerAll = containers.map((container) => {
-            return {
-              Id: container.Id,
-              Names: JSON.stringify(container.Names),
-            };
-          });
-
-          const containerFind = containerAll.find((container) => {
-            return JSON.stringify(container.Names).includes(containerName);
-          });
-
-          if (!containerFind) {
-            ws.send(`Service not found ${JSON.stringify(containerAll)}`);
-            // ws.close();
-            return;
-          }
-
-          containerId = containerFind.Id;
-          const container = docker.getContainer(containerId);
-
+        if (containerName.toString().toLowerCase() === 'all') {
+          console.log('Streaming logs for all containers');
+          const repoPath = path.join(
+            __dirname,
+            '../',
+            'service',
+            'opstack-compose'
+          );
           try {
-            // Stream logs from the Docker container
-            logStream = await container.logs({
-              follow: true,
-              stdout: true,
-              stderr: true,
+            const cmd = `docker-compose -f ${path.join(
+              repoPath,
+              'docker-compose-all.yml'
+            )} logs -f`;
+            const dockerComposeLogs: ChildProcess = exec(cmd, {
+              cwd: repoPath,
             });
 
-            logStream.on('data', (chunk) => {
-              ws.send(chunk.toString());
+            // Capture stdout (standard output)
+            dockerComposeLogs.stdout.on('data', async (data) => {
+              ws.send(data.toString());
             });
 
-            logStream.on('end', () => {
-              ws.send('Log stream ended.');
+            // Capture stderr (error output)
+            dockerComposeLogs.stderr.on('data', async (data) => {
+              ws.send(data.toString());
+            });
+
+            // Handle process close event
+            dockerComposeLogs.on('close', async (code) => {
+              ws.send(`Process exited with code ${code}`);
               ws.close();
             });
           } catch (error) {
             console.error('Error streaming logs:', error.message);
             ws.send('Error streaming logs.');
           }
-        });
+        } else {
+          docker.listContainers({ all: true }, async (err, containers) => {
+            if (err) {
+              console.error(err);
+              ws.send('Error fetching logs');
+              ws.close();
+              return;
+            }
+
+            const containerAll = containers.map((container) => {
+              return {
+                Id: container.Id,
+                Names: JSON.stringify(container.Names),
+              };
+            });
+
+            const containerFind = containerAll.find((container) => {
+              return JSON.stringify(container.Names).includes(containerName);
+            });
+
+            if (!containerFind) {
+              ws.send(`Service not found ${JSON.stringify(containerAll)}`);
+              // ws.close();
+              return;
+            }
+
+            containerId = containerFind.Id;
+            const container = docker.getContainer(containerId);
+
+            try {
+              // Stream logs from the Docker container
+              logStream = await container.logs({
+                follow: true,
+                stdout: true,
+                stderr: true,
+              });
+
+              logStream.on('data', (chunk) => {
+                ws.send(chunk.toString());
+              });
+
+              logStream.on('end', () => {
+                ws.send('Log stream ended.');
+                ws.close();
+              });
+            } catch (error) {
+              console.error('Error streaming logs:', error.message);
+              ws.send('Error streaming logs.');
+            }
+          });
+        }
       });
 
       ws.on('close', () => {
-        console.log('WebSocket connection closed.');
         if (logStream) {
           logStream.destroy();
         }
       });
     } catch (error) {
-      ws.send('Invalid token');
+      console.error('Error connecting to WebSocket:', error.message);
+      ws.send('Error connecting to WebSocket.');
       ws.close();
     }
   });

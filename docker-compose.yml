@@ -8,21 +8,18 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      APP_DB_USER: ${APP_DB_USER}
-      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
     volumes:
       - ./database:/var/lib/postgresql/data
       # init schema
-      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     ports:
-      - '5432:5432'
+      - '7519:5432'
     networks:
       - mynetwork
   backend-main:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: unless-stopped
+    # restart: unless-stopped
     ports:
       - '3010:3010'
     networks:
@@ -32,7 +29,7 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     depends_on:
       - db
     command: >
