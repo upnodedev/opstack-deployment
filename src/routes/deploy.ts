@@ -115,6 +115,10 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
   const repoName = 'opstack-compose';
   const repoPath = path.join(targetDir, repoName);
   const L1_RPC_URL = payload.L1_RPC_URL;
+  const DOMAIN_NAME =
+    process.env.DOMAIN_NAME === 'localhost'
+      ? undefined
+      : process.env.DOMAIN_NAME;
 
   // get current block number from L1
   const provider = new ethers.JsonRpcProvider(L1_RPC_URL);
@@ -144,6 +148,22 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
     return res.status(500).json({ message: 'Failed to clone repository' });
   }
 
+  const domainList = {
+    DOMAIN_NAME: DOMAIN_NAME,
+    L2_RPC_URL: DOMAIN_NAME
+      ? `https://chain.${DOMAIN_NAME}`
+      : 'http://localhost:8545',
+    L2_BLOCK_EXPLORER_URL_API: payload.DOMAIN_NAME
+      ? `https://blockscout.${DOMAIN_NAME}/api`
+      : 'http://localhost:4240/api',
+    L2_BLOCK_EXPLORER_URL: payload.DOMAIN_NAME
+      ? `https://blockscout.${DOMAIN_NAME}`
+      : 'http://localhost:4240',
+    OPSTACK_BRIDGE_INDEXER_SERVER: payload.DOMAIN_NAME
+      ? `https://opstack-bridge-indexer-server.${DOMAIN_NAME}`
+      : 'http://localhost:3043',
+  };
+
   // create indexer.env
   const envIndexerPath = path.join(repoPath, 'indexer.env');
 
@@ -154,7 +174,7 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
     L1_LIMIT_BLOCKS: 1000,
     L1_PORTAL_ADDRESS: '0x',
     L1_PORTAL_BLOCK_CREATED: blockNumber,
-    L2_RPC_URL_1: 'http://localhost:8545/',
+    L2_RPC_URL_1: domainList.L2_RPC_URL,
     L2_CHAIN_NAME: payload.L2_CHAIN_NAME,
     L2_CHAIN_ID: payload.L2_CHAIN_ID,
     L2_STANDARD_BRIDGE_ADDRESS: '0x4200000000000000000000000000000000000010',
@@ -187,16 +207,14 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
     VITE_L1_BLOCK_EXPLORER_API: payload.L1_BLOCK_EXPLORER_API,
     VITE_L2_CHAIN_NAME: payload.L2_CHAIN_NAME,
     VITE_L2_CHAIN_ID: payload.L2_CHAIN_ID,
-    VITE_L2_RPC_URL: payload.L2_RPC_URL || 'http://localhost:8545',
+    VITE_L2_RPC_URL: domainList.L2_RPC_URL,
     VITE_L2_LOGO_URL: payload.L2_LOGO_URL,
     VITE_L2_NATIVE_CURRENCY_DECIMALS: 18,
     VITE_L2_NATIVE_CURRENCY_NAME: payload.L2_NATIVE_CURRENCY_NAME,
     VITE_L2_NATIVE_CURRENCY_SYMBOL: payload.L2_NATIVE_CURRENCY_SYMBOL,
     VITE_L2_BLOCK_EXPLORER_NAME: `${payload.L2_CHAIN_NAME} explorer`,
-    VITE_L2_BLOCK_EXPLORER_URL:
-      payload.L2_BLOCK_EXPLORER_URL || 'http://localhost:4240',
-    VITE_L2_BLOCK_EXPLORER_API:
-      payload.L2_BLOCK_EXPLORER_API || 'http://localhost:4240/api',
+    VITE_L2_BLOCK_EXPLORER_URL: domainList.L2_BLOCK_EXPLORER_URL,
+    VITE_L2_BLOCK_EXPLORER_API: domainList.L2_BLOCK_EXPLORER_URL_API,
     VITE_L2_OUTPUT_ORACLE_PROXY_ADDRESS: '0x',
     VITE_PORTAL_PROXY_ADDRESS: '0x',
     VITE_L1_STANDARD_BRIDGE_PROXY_ADDRESS: '0x',
@@ -206,10 +224,12 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
     VITE_WITHDRAWAL_PERIOD: 600,
     VITE_L2_STANDARD_BRIDGE_PROXY_ADDRESS:
       '0x4200000000000000000000000000000000000010',
-    VITE_API_ENDPOINT: 'http://localhost:3043',
+    VITE_API_ENDPOINT: domainList.OPSTACK_BRIDGE_INDEXER_SERVER,
   });
 
   fs.writeFileSync(envUiPath, newEnvUi);
+
+  const oldBlockScout = fs.readFileSync(path.join(repoPath), 'utf8');
 
   const service = await prisma.service.findFirst({
     where: {
