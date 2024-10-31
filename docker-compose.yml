@@ -95,6 +95,7 @@ services:
       sh -c "
       npx prisma migrate deploy &&
       npm run start"
+    privileged: true
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`deploy-api.${DOMAIN_NAME}`)"
