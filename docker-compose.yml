@@ -25,10 +25,10 @@ services:
       - "traefik.http.routers.chain.entrypoints=web"
       - "traefik.http.services.chain.loadbalancer.server.port=8545"
 
-      # grafana
-      - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN_NAME}`)"
-      - "traefik.http.routers.grafana.entrypoints=web"
-      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      # # grafana
+      # - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN_NAME}`)"
+      # - "traefik.http.routers.grafana.entrypoints=web"
+      # - "traefik.http.services.grafana.loadbalancer.server.port=3000"
       
       #blockscout-backend
       - "traefik.http.routers.blockscout-backend.rule=Host(`blockscout-backend.${DOMAIN_NAME}`)"
