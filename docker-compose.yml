@@ -71,6 +71,11 @@ services:
       # init schema
     ports:
       - '7519:5432'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   backend-main:
     build:
       context: .
@@ -78,12 +83,14 @@ services:
     # restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./service:/app/service
     env_file:
       - .env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     command: >
       sh -c "
       npx prisma migrate deploy &&
@@ -92,7 +99,6 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`deploy-api.${DOMAIN_NAME}`)"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
-    privileged: true 
   frontend-main:
     build:
       context: .

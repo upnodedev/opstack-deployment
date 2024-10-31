@@ -229,8 +229,6 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
 
   fs.writeFileSync(envUiPath, newEnvUi);
 
-  const oldBlockScout = fs.readFileSync(path.join(repoPath), 'utf8');
-
   const service = await prisma.service.findFirst({
     where: {
       name: 'rollup',
