@@ -1,6 +1,24 @@
 version: '3.8'
 
 services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.dashboard.address=:8080"   
+      - "--api.dashboard=true"                   
+    ports:
+      - "80:80"      
+      - "8080:8080" 
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock 
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${DOMAIN_NAME}`)" 
+      - "traefik.http.routers.traefik-dashboard.entrypoints=web"  
+      - "traefik.http.services.traefik-dashboard.loadbalancer.server.port=8080" 
   db:
     image: postgres:13
     restart: unless-stopped
@@ -13,8 +31,6 @@ services:
       # init schema
     ports:
       - '7519:5432'
-    networks:
-      - mynetwork
   backend-main:
     build:
       context: .
@@ -22,8 +38,6 @@ services:
     # restart: unless-stopped
     ports:
       - '3010:3010'
-    networks:
-      - mynetwork
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     env_file:
@@ -36,6 +50,10 @@ services:
       sh -c "
       npx prisma migrate deploy &&
       npm run start"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`deploy-api.${DOMAIN_NAME}`)"
+      - "traefik.http.services.backend.loadbalancer.server.port=3010"
   frontend-main:
     build:
       context: .
@@ -43,16 +61,14 @@ services:
     restart: unless-stopped
     ports:
       - '3002:3000'
-    networks:
-      - mynetwork
     depends_on:
       - backend-main
     environment:
-      - API_ENDPOINT=http://backend-main:3010
-
-networks:
-  mynetwork:
-    driver: bridge
+      - API_ENDPOINT=https://deploy-api.${DOMAIN_NAME}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`deploy.${DOMAIN_NAME}`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
 
 volumes:
   db-data:
