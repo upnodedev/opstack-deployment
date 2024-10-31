@@ -36,8 +36,6 @@ services:
       context: .
       dockerfile: Dockerfile
     # restart: unless-stopped
-    ports:
-      - '3010:3010'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     env_file:
@@ -53,18 +51,19 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`deploy-api.${DOMAIN_NAME}`)"
-      - "traefik.http.services.backend.loadbalancer.server.port=3010"
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"
   frontend-main:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        PROTOCOL: ${PROTOCOL}
+        DOMAIN_NAME: ${DOMAIN_NAME}
     restart: unless-stopped
-    ports:
-      - '3002:3000'
     depends_on:
       - backend-main
-    environment:
-      - API_ENDPOINT=https://deploy-api.${DOMAIN_NAME}
+    env_file:
+      - .env
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`deploy.${DOMAIN_NAME}`)"
