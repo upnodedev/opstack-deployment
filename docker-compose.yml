@@ -5,18 +5,18 @@ services:
     command:
       - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
-      - "--entrypoints.dashboard.address=:8080"   
+      - "--entrypoints.dashboard.address=:8087"   
       - "--api.dashboard=true"                   
     ports:
       - "80:80"      
-      - "8080:8080" 
+      - "8087:8087" 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock 
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN_NAME}`)" 
       - "traefik.http.routers.traefik.entrypoints=web"  
-      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8087"
 
       # Routing op-geth
       - "traefik.http.routers.chain.rule=Host(`chain.${DOMAIN_NAME}`)"
