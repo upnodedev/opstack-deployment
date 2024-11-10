@@ -33,6 +33,82 @@ router.get('/log/:name', requireJWTAuth, async (req, res) => {
   return res.status(200).json({ message: logMessages });
 });
 
+router.post('/rollupt', requireJWTAuth, async (req, res) => {
+  const payload = req.body;
+
+  const repoName = 'opstack-compose';
+  const repoPath = path.join(targetDir, repoName);
+
+  if (fs.existsSync(repoPath)) {
+    fs.rm(repoPath, { recursive: true, force: true }, (err) => {
+      if (err) {
+        return res
+          .status(500)
+          .json({ message: 'Failed to delete existing directory' });
+      }
+    });
+  }
+  await git.clone(repoUrl, repoPath, ['-b', branchName]);
+
+  // clone bridge repo
+  // exec bash file
+  exec('bash ../../../../service/opstack-compose/bridge/script.bash');
+
+  const rollupProcess = await deployService(
+    'rollup',
+    repoPath,
+    'docker-compose.yml',
+    true,
+    rollupConfig,
+    payload,
+    async () => {
+      const envPath = path.join(
+        repoPath,
+        'blockscout',
+        'envs',
+        'common-frontend.env'
+      );
+
+      const env = fs.readFileSync(envPath, 'utf8');
+      const newEnv = replaceEnv(env, {
+        NEXT_PUBLIC_NETWORK_NAME: payload.L2_CHAIN_NAME,
+        NEXT_PUBLIC_NETWORK_SHORT_NAME: payload.L2_CHAIN_NAME,
+        NEXT_PUBLIC_NETWORK_ID: payload.L2_CHAIN_ID,
+        NEXT_PUBLIC_IS_TESTNET: false,
+      });
+
+      fs.writeFileSync(envPath, newEnv);
+
+      await deployService(
+        'blockscout',
+        path.join(repoPath, 'blockscout'),
+        'docker-compose.yml',
+        false,
+        {},
+        {},
+        () => {
+          // deploy bridge
+          deployService(
+            'bridge',
+            path.join(repoPath, 'bridge'),
+            'docker-compose.yml',
+            false,
+            {},
+            {},
+            () => {}
+          );
+        }
+      );
+    }
+  );
+
+  if (rollupProcess.isSuccess) {
+    return res.status(200).json({ message: rollupProcess.message });
+  } else {
+    return res.status(500).json({ message: rollupProcess.message });
+  }
+});
+
 router.post('/rollup', requireJWTAuth, async (req, res) => {
   const payload = req.body;
 

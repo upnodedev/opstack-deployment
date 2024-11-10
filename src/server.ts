@@ -3,14 +3,11 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import bodyParser from 'body-parser';
-import fs from 'fs';
+
 import healthz from './routes/healthz';
 import auth from './routes/auth';
 import deploy from './routes/deploy';
-import { connectPrisma, disconnectPrisma } from './core/prisma';
-import { createServer } from 'http';
-import { WebSocketServer } from 'ws';
+import config from './routes/config';
 
 const app = express();
 app.use(express.json());
@@ -33,5 +30,6 @@ app.use(morgan('dev'));
 app.use('/api/healthz', healthz);
 app.use('/api/auth', auth);
 app.use('/api/deploy', deploy);
+app.use('/api/config', config);
 
 export default app;
