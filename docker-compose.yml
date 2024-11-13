@@ -3,64 +3,65 @@ services:
     image: traefik:v2.10
     container_name: traefik
     command:
-      - "--providers.docker=true"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.dashboard.address=:8087"   
-      - "--api.dashboard=true"                   
+      - '--providers.docker=true'
+      - '--entrypoints.web.address=:80'
+      - '--entrypoints.dashboard.address=:8087'
+      - '--api.dashboard=true'
     ports:
-      - "80:80"
+      - '80:80'
+
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock 
+      - /var/run/docker.sock:/var/run/docker.sock
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN_NAME}`)" 
-      - "traefik.http.routers.traefik.entrypoints=web"  
-      - "traefik.http.services.traefik.loadbalancer.server.port=8087"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.traefik.entrypoints=web'
+      - 'traefik.http.services.traefik.loadbalancer.server.port=8087'
 
       # Routing op-geth
-      - "traefik.http.routers.chain.rule=Host(`chain.${DOMAIN_NAME}`)"
-      - "traefik.http.routers.chain.entrypoints=web"
-      - "traefik.http.services.chain.loadbalancer.server.port=8545"
+      - 'traefik.http.routers.chain.rule=Host(`chain.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.chain.entrypoints=web'
+      - 'traefik.http.services.chain.loadbalancer.server.port=8545'
 
       # grafana
-      - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN_NAME}`)"
-      - "traefik.http.routers.grafana.entrypoints=web"
-      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      - 'traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.grafana.entrypoints=web'
+      - 'traefik.http.services.grafana.loadbalancer.server.port=3000'
 
       # prometheus
-      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN_NAME}`)"
-      - "traefik.http.routers.prometheus.entrypoints=web"
-      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
-      
-      #blockscout-backend
-      - "traefik.http.routers.blockscout-backend.rule=Host(`blockscout-backend.${DOMAIN_NAME}`)"
-      - "traefik.http.routers.blockscout-backend.entrypoints=web"
-      - "traefik.http.services.blockscout-backend.loadbalancer.server.port=4240"
+      - 'traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.prometheus.entrypoints=web'
+      - 'traefik.http.services.prometheus.loadbalancer.server.port=9090'
 
-      #blockscout-frontend
-      - "traefik.http.routers.blockscout.rule=Host(`blockscout.${DOMAIN_NAME}`)"
-      - "traefik.http.routers.blockscout.entrypoints=web"
-      - "traefik.http.services.blockscout.loadbalancer.server.port=4240"
+      # blockscout-backend
+      - 'traefik.http.routers.blockscout-backend.rule=Host(`blockscout-backend.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.blockscout-backend.entrypoints=web'
+      - 'traefik.http.services.blockscout-backend.loadbalancer.server.port=4240'
 
-      #blockscout-stats
-      - "traefik.http.routers.blockscout-stats.rule=Host(`blockscout-stats.${DOMAIN_NAME}`)"
-      - "traefik.http.routers.blockscout-stats.entrypoints=web"
-      - "traefik.http.services.blockscout-stats.loadbalancer.server.port=8080"
+      # blockscout-frontend
+      - 'traefik.http.routers.blockscout.rule=Host(`blockscout.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.blockscout.entrypoints=web'
+      - 'traefik.http.services.blockscout.loadbalancer.server.port=4240'
 
-      #blockscout-visualizer
-      - "traefik.http.routers.blockscout-visualizer.rule=Host(`blockscout-visualizer.${DOMAIN_NAME}`)"
-      - "traefik.http.routers.blockscout-visualizer.entrypoints=web"
-      - "traefik.http.services.blockscout-visualizer.loadbalancer.server.port=8081"
+      # blockscout-stats
+      - 'traefik.http.routers.blockscout-stats.rule=Host(`blockscout-stats.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.blockscout-stats.entrypoints=web'
+      - 'traefik.http.services.blockscout-stats.loadbalancer.server.port=8080'
 
-      #opstack-bridge-indexer-server
-      - "traefik.http.routers.opstack-bridge-indexer-server.rule=Host(`opstack-bridge-indexer-server.${DOMAIN_NAME}`)"
-      - "traefik.http.routers.opstack-bridge-indexer-server.entrypoints=web"
-      - "traefik.http.services.opstack-bridge-indexer-server.loadbalancer.server.port=3043"
+      # blockscout-visualizer
+      - 'traefik.http.routers.blockscout-visualizer.rule=Host(`blockscout-visualizer.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.blockscout-visualizer.entrypoints=web'
+      - 'traefik.http.services.blockscout-visualizer.loadbalancer.server.port=8081'
 
-      #bridge
-      - "traefik.http.routers.bridge.rule=Host(`bridge.${DOMAIN_NAME}`)"
-      - "traefik.http.routers.bridge.entrypoints=web"
-      - "traefik.http.services.bridge.loadbalancer.server.port=3044"
+      # opstack-bridge-indexer-server
+      - 'traefik.http.routers.opstack-bridge-indexer-server.rule=Host(`opstack-bridge-indexer-server.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.opstack-bridge-indexer-server.entrypoints=web'
+      - 'traefik.http.services.opstack-bridge-indexer-server.loadbalancer.server.port=3043'
+
+      # bridge
+      - 'traefik.http.routers.bridge.rule=Host(`bridge.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.bridge.entrypoints=web'
+      - 'traefik.http.services.bridge.loadbalancer.server.port=3044'
   db:
     image: postgres:13
     restart: unless-stopped
@@ -74,7 +75,7 @@ services:
     ports:
       - '7519:5432'
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -99,9 +100,9 @@ services:
       npm run start"
     privileged: true
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`deploy-api.${DOMAIN_NAME}`)"
-      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.backend.rule=Host(`deploy-api.${DOMAIN_NAME}`)'
+      - 'traefik.http.services.backend.loadbalancer.server.port=3000'
   frontend-main:
     build:
       context: .
@@ -115,9 +116,10 @@ services:
     env_file:
       - .env
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`deploy.${DOMAIN_NAME}`)"
-      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.frontend.rule=Host(`deploy.${DOMAIN_NAME}`)'
+      - 'traefik.http.services.frontend.loadbalancer.server.port=3000'
 
-volumes:
-  db-data:
+networks:
+  traefik-network:
+    driver: bridge
