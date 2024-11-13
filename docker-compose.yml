@@ -8,16 +8,7 @@ services:
       - "--entrypoints.dashboard.address=:8087"   
       - "--api.dashboard=true"                   
     ports:
-      - "80:80"      
-      - "8087:8087" 
-      - "8545:8545"
-      - "3000:3000"
-      - "9090:9090"
-      - "4240:4240"
-      - "8080:8080"
-      - "8081:8081"
-      - "3043:3043"
-      - "3044:3044"
+      - "80:80"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock 
     labels:
