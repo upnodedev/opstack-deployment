@@ -226,7 +226,7 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
         });
         console.log('Rollup deployment started');
       } else {
-        console.error(`Error during deployment rollup`);
+        console.error(`Error during deployment rollup +` + code);
 
         await prisma.service.update({
           where: {
@@ -240,7 +240,7 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
     });
   } catch (error) {
     console.error(
-      `Error during deployment rollup`
+      `Error during deployment rollup (catch block)`,
     );
     console.log(error);
 

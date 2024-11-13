@@ -120,7 +120,3 @@ services:
       - 'traefik.enable=true'
       - 'traefik.http.routers.frontend.rule=Host(`deploy.${DOMAIN_NAME}`)'
       - 'traefik.http.services.frontend.loadbalancer.server.port=3000'
-
-networks:
-  traefik-network:
-    driver: bridge
