@@ -83,55 +83,55 @@ http:
     backend-main:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:3050"
+          - url: "http://localhost:3050"
     
     frontend-main:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:3051"
+          - url: "http://localhost:3051"
 
     op-geth:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:8545"
+          - url: "http://localhost:8545"
 
     grafana:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:3000"
+          - url: "http://localhost:3000"
     
     prometheus:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:9090"
+          - url: "http://localhost:9090"
     
     blockscout-backend:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:4240"
+          - url: "http://localhost:4240"
 
     blockscout:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:4240"
+          - url: "http://localhost:4240"
     
     blockscout-stats:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:8080"
+          - url: "http://localhost:8080"
     
     blockscout-visualizer:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:8081"
+          - url: "http://localhost:8081"
     
     opstack-bridge-indexer-server:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:3043"
+          - url: "http://localhost:3043"
     
     bridge:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:3044"
+          - url: "http://localhost:3044"
 
