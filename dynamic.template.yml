@@ -9,6 +9,7 @@ http:
       rule: "Host(`dashboard.${DOMAIN_NAME}`)"
       service: dashboard
       entrypoints: web
+      
 
   services:
     app1:

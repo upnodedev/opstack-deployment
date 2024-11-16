@@ -19,7 +19,6 @@ services:
     ports:
       - '80:80'
     volumes:
-      - './dynamic.yml.template:/etc/traefik/dynamic.yml.template'
       - '/var/run/docker.sock:/var/run/docker.sock:ro'
   db:
     image: postgres:13

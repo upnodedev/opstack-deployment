@@ -4,11 +4,10 @@ FROM traefik:v2.10
 RUN apk add --no-cache gettext
 
 # Copy the template file into the image
-COPY dynamic.yml.template /etc/traefik/dynamic.yml.template
+COPY dynamic.template.yml /etc/traefik/dynamic.template.yml
 
 # Build the final dynamic.yml file during the image build
 ARG DOMAIN_NAME
-RUN envsubst '${DOMAIN_NAME}' < /etc/traefik/dynamic.yml.template > /etc/traefik/dynamic.yml
+RUN envsubst '${DOMAIN_NAME}' < /etc/traefik/dynamic.template.yml > /etc/traefik/dynamic.yml
 
 # Set the default command to run Traefik
-# CMD ["traefik", "--providers.file.filename=/etc/traefik/dynamic.yml", "--entrypoints.web.address=:80", "--api.dashboard=true", "--api.insecure=true"]
