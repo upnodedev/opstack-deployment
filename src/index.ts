@@ -1,8 +1,8 @@
-import { connectPrisma, disconnectPrisma } from "./core/prisma";
-import app from "./server";
+import { connectPrisma, disconnectPrisma } from './core/prisma';
+import app from './server';
 import http from 'http';
-import { initWebSocketServer } from "./socket";
-import env from "./utils/env";
+import { initWebSocketServer } from './socket';
+import env from './utils/env';
 
 const server = http.createServer(app);
 
@@ -19,7 +19,7 @@ async function gracefulShutdown() {
   });
 }
 
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 server.listen(PORT, () => {
   // test prisma connection
   connectPrisma();

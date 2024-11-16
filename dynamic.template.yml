@@ -6,20 +6,132 @@ http:
           - "${USERNAME}:${PASSWORDHASH}"
   
   routers:
-    app1:
-      rule: "Host(`app1.${DOMAIN_NAME}`)"
-      service: app1
-      entrypoints: web
-
     dashboard:
       rule: "Host(`dashboard.${DOMAIN_NAME}`)"
       service: api@internal
       entrypoints: web
       middlewares:
-        - auth   
+        - auth 
+    
+    # backend-main
+    backend-main:
+      rule: "Host(`deploy-api.${DOMAIN_NAME}`)"
+      service: backend-main
+      entrypoints: web
+    
+    # frontend-main
+    frontend-main:
+      rule: "Host(`deploy.${DOMAIN_NAME}`)"
+      service: frontend-main
+      entrypoints: web
+
+    # chain
+    op-geth:
+      rule: "Host(`chain.${DOMAIN_NAME}`)"
+      service: op-geth
+      entrypoints: web
+
+    # grafana
+    grafana:
+      rule: "Host(`grafana.${DOMAIN_NAME}`)"
+      service: grafana
+      entrypoints: web  
+    
+    # prometheus
+    prometheus:
+      rule: "Host(`prometheus.${DOMAIN_NAME}`)"
+      service: prometheus
+      entrypoints: web
+    
+    # blockscout-backend
+    blockscout-backend:
+      rule: "Host(`blockscout-backend.${DOMAIN_NAME}`)"
+      service: blockscout-backend
+      entrypoints: web
+
+    # blockscout-frontend
+    blockscout:
+      rule: "Host(`blockscout.${DOMAIN_NAME}`)"
+      service: blockscout
+      entrypoints: web
+
+    # blockscout-stats
+    blockscout-stats:
+      rule: "Host(`blockscout-stats.${DOMAIN_NAME}`)"
+      service: blockscout-stats
+      entrypoints: web
+
+    # blockscout-visualizer
+    blockscout-visualizer:
+      rule: "Host(`blockscout-visualizer.${DOMAIN_NAME}`)"
+      service: blockscout-visualizer
+      entrypoints: web
+
+    # opstack-bridge-indexer-server
+    opstack-bridge-indexer-server:
+      rule: "Host(`opstack-bridge-indexer-server.${DOMAIN_NAME}`)"
+      service: opstack-bridge-indexer-server
+      entrypoints: web
+
+    # opstack-bridge-indexer-frontend
+    bridge:
+      rule: "Host(`bridge.${DOMAIN_NAME}`)"
+      service: bridge
+      entrypoints: web
 
   services:
-    app1:
+    backend-main:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:5173"  # Vite dev server
+          - url: "http://host.docker.internal:3050"
+    
+    frontend-main:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3051"
+
+    op-geth:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8545"
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3000"
+    
+    prometheus:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:9090"
+    
+    blockscout-backend:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:4240"
+
+    blockscout:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:4240"
+    
+    blockscout-stats:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8080"
+    
+    blockscout-visualizer:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8081"
+    
+    opstack-bridge-indexer-server:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3043"
+    
+    bridge:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3044"
+
