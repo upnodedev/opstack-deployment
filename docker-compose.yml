@@ -10,6 +10,7 @@ services:
     image: traefik-envsubst
     container_name: traefik
     restart: always
+    network_mode: host
     command:
       - '--entrypoints.web.address=:80'
       # - '--providers.docker=true'
