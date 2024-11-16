@@ -1,4 +1,10 @@
 http:
+  middlewares:
+    auth:
+      basicAuth:
+        users:
+          - "${USERNAME}:${PASSWORDHASH}"
+  
   routers:
     app1:
       rule: "Host(`app1.${DOMAIN_NAME}`)"
@@ -7,17 +13,13 @@ http:
 
     dashboard:
       rule: "Host(`dashboard.${DOMAIN_NAME}`)"
-      service: dashboard
+      service: api@internal
       entrypoints: web
-      
+      middlewares:
+        - auth   
 
   services:
     app1:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:5173"  # Vite dev server
-
-    dashboard:
-      loadBalancer:
-        servers:
-          - url: "http://127.0.0.1:8080"  # Internal Traefik API

@@ -1,13 +1,30 @@
 FROM traefik:v2.10
 
-# Install envsubst
-RUN apk add --no-cache gettext
+# Install necessary tools
+RUN apk add --no-cache gettext apache2-utils
 
-# Copy the template file into the image
+# Set up ARGs for substitution
+ARG USERNAME
+ARG PASSWORD
+ARG DOMAIN_NAME
+
+# Create the directory for Traefik configuration
+RUN mkdir -p /etc/traefik
+
+# Generate the hashed password
+RUN PASSWORDHASH=$(htpasswd -nbBC 10 "" $PASSWORD | tr -d ':\n') && \
+    echo "Generating credentials for ${USERNAME}" && \
+    echo "USERNAME=${USERNAME}" >> /etc/environment && \
+    echo "PASSWORDHASH=${PASSWORDHASH}" >> /etc/environment
+
+# Copy the dynamic.yml template
 COPY dynamic.template.yml /etc/traefik/dynamic.template.yml
 
-# Build the final dynamic.yml file during the image build
-ARG DOMAIN_NAME
-RUN envsubst '${DOMAIN_NAME}' < /etc/traefik/dynamic.template.yml > /etc/traefik/dynamic.yml
+# Use envsubst to preprocess dynamic.template.yml into dynamic.yml
+RUN export USERNAME=${USERNAME} && \
+    export PASSWORDHASH=$(htpasswd -nbBC 10 "" ${PASSWORD} | tr -d ':\n') && \
+    export DOMAIN_NAME=${DOMAIN_NAME} && \
+    envsubst < /etc/traefik/dynamic.template.yml > /etc/traefik/dynamic.yml
 
-# Set the default command to run Traefik
+# Set the default command to start Traefik
+# CMD ["traefik", "--providers.file.filename=/etc/traefik/dynamic.yml", "--entrypoints.web.address=:80", "--api.dashboard=true", "--api.insecure=false"]
