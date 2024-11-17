@@ -77,13 +77,13 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
     L2_RPC_URL: DOMAIN_NAME
       ? `https://chain.${DOMAIN_NAME}`
       : 'http://localhost:8545',
-    L2_BLOCK_EXPLORER_URL_API: payload.DOMAIN_NAME
+    L2_BLOCK_EXPLORER_URL_API: DOMAIN_NAME
       ? `https://blockscout.${DOMAIN_NAME}/api`
       : 'http://localhost:4240/api',
-    L2_BLOCK_EXPLORER_URL: payload.DOMAIN_NAME
+    L2_BLOCK_EXPLORER_URL: DOMAIN_NAME
       ? `https://blockscout.${DOMAIN_NAME}`
       : 'http://localhost:4240',
-    OPSTACK_BRIDGE_INDEXER_SERVER: payload.DOMAIN_NAME
+    OPSTACK_BRIDGE_INDEXER_SERVER: DOMAIN_NAME
       ? `https://opstack-bridge-indexer-server.${DOMAIN_NAME}`
       : 'http://localhost:3043',
   };
