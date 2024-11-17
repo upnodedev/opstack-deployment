@@ -177,10 +177,7 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
 
   try {
     deployExec.rollup = exec(
-      `docker-compose -f ${path.join(
-        repoPath,
-        'docker-compose-all.yml'
-      )} --profile sequencer --profile blockscout --profile opstack-bridge up -d --build`,
+      `docker-compose -f docker-compose-all.yml --profile sequencer --profile blockscout --profile opstack-bridge up -d --build`,
       { cwd: repoPath }
     );
 
