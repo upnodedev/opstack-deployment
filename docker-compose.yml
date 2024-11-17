@@ -9,7 +9,7 @@ services:
         PASSWORD: ${USER_PASSWORD}
     image: traefik-envsubst
     container_name: traefik
-    restart: alwaysdo
+    restart: unless-stopped
     network_mode: host
     command:
       - '--entrypoints.web.address=:80'
