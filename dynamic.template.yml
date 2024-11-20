@@ -112,7 +112,7 @@ http:
     blockscout-visualizer:
       loadBalancer:
         servers:
-          - url: "http://localhost:4241"
+          - url: "http://localhost:4242"
     
     opstack-bridge-indexer-server:
       loadBalancer:

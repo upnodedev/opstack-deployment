@@ -7,7 +7,7 @@ import fs from 'fs';
 import { createEnvFile } from '../utils/deployment';
 import prisma from '../core/prisma';
 import { createNewEnv, mergeDict, replaceEnv } from '../utils';
-import { rollupConfig } from '../constant/rollup.config';
+import { blockscoutConfig, rollupConfig } from '../constant/rollup.config';
 import { deployExec, deployService } from '../core/deployment';
 import Docker from 'dockerode';
 import { ethers } from 'ethers';
@@ -86,6 +86,12 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
     OPSTACK_BRIDGE_INDEXER_SERVER: DOMAIN_NAME
       ? `https://opstack-bridge-indexer-server.${DOMAIN_NAME}`
       : 'http://localhost:3043',
+    L2_STATS_API_HOST: DOMAIN_NAME
+      ? `https://blockscout-stats.${DOMAIN_NAME}`
+      : 'http://localhost:4241',
+    L2_VISUALIZER_API_HOST: DOMAIN_NAME
+      ? `https://blockscout-visualizer.${DOMAIN_NAME}`
+      : 'http://localhost:4242',
   };
 
   // create indexer.env
@@ -152,6 +158,27 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
   });
 
   fs.writeFileSync(envUiPath, newEnvUi);
+
+  // create blockscout-fe.env
+  const envBlockscoutFePath = path.join(repoPath, 'blockscout-fe.env');
+  const newEnvBlockscoutFe = mergeDict(blockscoutConfig, {
+    NEXT_PUBLIC_API_HOST: process.env.DOMAIN_NAME,
+    NEXT_PUBLIC_API_PROTOCOL: process.env.PROTOCOL,
+    NEXT_PUBLIC_NETWORK_NAME: payload.L2_CHAIN_NAME,
+    NEXT_PUBLIC_NETWORK_SHORT_NAME: payload.L2_CHAIN_NAME,
+    NEXT_PUBLIC_NETWORK_ID: payload.L2_CHAIN_ID,
+    NEXT_PUBLIC_NETWORK_CURRENCY_NAME: payload.L2_NATIVE_CURRENCY_NAME,
+    NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL: payload.L2_NATIVE_CURRENCY_SYMBOL,
+    NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS: 18,
+    NEXT_PUBLIC_APP_HOST: process.env.DOMAIN_NAME,
+    NEXT_PUBLIC_APP_PROTOCOL: process.env.PROTOCOL,
+    NEXT_PUBLIC_VISUALIZE_API_HOST: domainList.L2_VISUALIZER_API_HOST,
+    NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL:
+      process.env.PROTOCOL === 'http' ? 'ws' : 'wss',
+    NEXT_PUBLIC_IS_TESTNET: false,
+  });
+
+  fs.writeFileSync(envBlockscoutFePath, newEnvBlockscoutFe);
 
   const service = await prisma.service.findFirst({
     where: {
@@ -236,9 +263,7 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(
-      `Error during deployment rollup (catch block)`,
-    );
+    console.error(`Error during deployment rollup (catch block)`);
     console.log(error);
 
     await prisma.service.update({
