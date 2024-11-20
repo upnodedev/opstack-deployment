@@ -43,12 +43,6 @@ http:
       service: prometheus
       entrypoints: web
     
-    # blockscout-backend
-    blockscout-backend:
-      rule: "Host(`blockscout-backend.${DOMAIN_NAME}`)"
-      service: blockscout-backend
-      entrypoints: web
-
     # blockscout-frontend
     blockscout:
       rule: "Host(`blockscout.${DOMAIN_NAME}`)"
@@ -104,11 +98,6 @@ http:
       loadBalancer:
         servers:
           - url: "http://localhost:9090"
-    
-    blockscout-backend:
-      loadBalancer:
-        servers:
-          - url: "http://localhost:4240"
 
     blockscout:
       loadBalancer:
@@ -118,12 +107,12 @@ http:
     blockscout-stats:
       loadBalancer:
         servers:
-          - url: "http://localhost:8080"
+          - url: "http://localhost:4241"
     
     blockscout-visualizer:
       loadBalancer:
         servers:
-          - url: "http://localhost:8081"
+          - url: "http://localhost:4241"
     
     opstack-bridge-indexer-server:
       loadBalancer:
