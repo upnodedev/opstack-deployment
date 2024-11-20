@@ -160,7 +160,7 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
   fs.writeFileSync(envUiPath, newEnvUi);
 
   // create blockscout-fe.env
-  const envBlockscoutFePath = path.join(repoPath, 'blockscout-fe.env');
+  const envBlockscoutFePath = path.join(repoPath, 'blockscout.env');
   const newEnvBlockscoutFe = createNewEnv(
     mergeDict(blockscoutConfig, {
       NEXT_PUBLIC_API_HOST: `blockscout.${process.env.DOMAIN_NAME}`,
@@ -181,8 +181,6 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
     })
   );
 
-  console.log(envBlockscoutFePath, newEnvBlockscoutFe);
-
   fs.writeFileSync(envBlockscoutFePath, newEnvBlockscoutFe);
 
   const service = await prisma.service.findFirst({
@@ -202,7 +200,11 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
     },
   });
 
-  const envRollup = mergeDict(rollupConfig, payload);
+  const envRollup = mergeDict(rollupConfig, {
+    ...payload,
+    APP_BLOCKSCOUT_HOST: `blockscout.${process.env.DOMAIN_NAME}`,
+    APP_BLOCKSCOUT_PROTOCAL: process.env.PROTOCOL,
+  });
   createEnvFile(envRollup, repoPath);
   // sleep 1 s
   await new Promise((resolve) => setTimeout(resolve, 1000));
