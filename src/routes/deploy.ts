@@ -161,22 +161,26 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
 
   // create blockscout-fe.env
   const envBlockscoutFePath = path.join(repoPath, 'blockscout-fe.env');
-  const newEnvBlockscoutFe = mergeDict(blockscoutConfig, {
-    NEXT_PUBLIC_API_HOST: process.env.DOMAIN_NAME,
-    NEXT_PUBLIC_API_PROTOCOL: process.env.PROTOCOL,
-    NEXT_PUBLIC_NETWORK_NAME: payload.L2_CHAIN_NAME,
-    NEXT_PUBLIC_NETWORK_SHORT_NAME: payload.L2_CHAIN_NAME,
-    NEXT_PUBLIC_NETWORK_ID: payload.L2_CHAIN_ID,
-    NEXT_PUBLIC_NETWORK_CURRENCY_NAME: payload.L2_NATIVE_CURRENCY_NAME,
-    NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL: payload.L2_NATIVE_CURRENCY_SYMBOL,
-    NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS: 18,
-    NEXT_PUBLIC_APP_HOST: process.env.DOMAIN_NAME,
-    NEXT_PUBLIC_APP_PROTOCOL: process.env.PROTOCOL,
-    NEXT_PUBLIC_VISUALIZE_API_HOST: domainList.L2_VISUALIZER_API_HOST,
-    NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL:
-      process.env.PROTOCOL === 'http' ? 'ws' : 'wss',
-    NEXT_PUBLIC_IS_TESTNET: false,
-  });
+  const newEnvBlockscoutFe = createNewEnv(
+    mergeDict(blockscoutConfig, {
+      NEXT_PUBLIC_API_HOST: process.env.DOMAIN_NAME,
+      NEXT_PUBLIC_API_PROTOCOL: process.env.PROTOCOL,
+      NEXT_PUBLIC_NETWORK_NAME: payload.L2_CHAIN_NAME,
+      NEXT_PUBLIC_NETWORK_SHORT_NAME: payload.L2_CHAIN_NAME,
+      NEXT_PUBLIC_NETWORK_ID: payload.L2_CHAIN_ID,
+      NEXT_PUBLIC_NETWORK_CURRENCY_NAME: payload.L2_NATIVE_CURRENCY_NAME,
+      NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL: payload.L2_NATIVE_CURRENCY_SYMBOL,
+      NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS: 18,
+      NEXT_PUBLIC_APP_HOST: process.env.DOMAIN_NAME,
+      NEXT_PUBLIC_APP_PROTOCOL: process.env.PROTOCOL,
+      NEXT_PUBLIC_VISUALIZE_API_HOST: domainList.L2_VISUALIZER_API_HOST,
+      NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL:
+        process.env.PROTOCOL === 'http' ? 'ws' : 'wss',
+      NEXT_PUBLIC_IS_TESTNET: false,
+    })
+  );
+
+  console.log(envBlockscoutFePath, newEnvBlockscoutFe);
 
   fs.writeFileSync(envBlockscoutFePath, newEnvBlockscoutFe);
 
