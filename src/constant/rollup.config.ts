@@ -177,7 +177,7 @@ export const blockscoutConfig = {
   NEXT_PUBLIC_API_BASE_PATH: '/',
   NEXT_PUBLIC_APP_HOST: 'localhost',
   NEXT_PUBLIC_APP_PROTOCOL: 'http',
-  NEXT_PUBLIC_HOMEPAGE_CHARTS: ['daily_txs'],
+  NEXT_PUBLIC_HOMEPAGE_CHARTS: "['daily_txs']",
   NEXT_PUBLIC_VISUALIZE_API_HOST: 'http://localhost:8081',
   NEXT_PUBLIC_IS_TESTNET: true,
   NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL: 'ws',

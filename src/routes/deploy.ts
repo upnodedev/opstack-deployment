@@ -163,8 +163,9 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
   const envBlockscoutFePath = path.join(repoPath, 'blockscout-fe.env');
   const newEnvBlockscoutFe = createNewEnv(
     mergeDict(blockscoutConfig, {
-      NEXT_PUBLIC_API_HOST: process.env.DOMAIN_NAME,
+      NEXT_PUBLIC_API_HOST: `blockscout.${process.env.DOMAIN_NAME}`,
       NEXT_PUBLIC_API_PROTOCOL: process.env.PROTOCOL,
+      NEXT_PUBLIC_STATS_API_HOST: domainList.L2_STATS_API_HOST,
       NEXT_PUBLIC_NETWORK_NAME: payload.L2_CHAIN_NAME,
       NEXT_PUBLIC_NETWORK_SHORT_NAME: payload.L2_CHAIN_NAME,
       NEXT_PUBLIC_NETWORK_ID: payload.L2_CHAIN_ID,
