@@ -210,7 +210,8 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   try {
-    const CURRENT_PATH = process.env.CURRENT_PATH || await runCommand('pwd');
+    const CURRENT_PATH = process.env.CURRENT_PATH || (await runCommand('pwd'));
+    console.log('CURRENT_PATH', CURRENT_PATH);
 
     deployExec.rollup = exec(
       `CURRENT_PATH=${CURRENT_PATH} docker-compose -f docker-compose-all.yml --profile sequencer --profile blockscout --profile opstack-bridge up -d --build`,
