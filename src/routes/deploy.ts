@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { createEnvFile } from '../utils/deployment';
 import prisma from '../core/prisma';
-import { createNewEnv, mergeDict, replaceEnv } from '../utils';
+import { createNewEnv, mergeDict, replaceEnv, runCommand } from '../utils';
 import { blockscoutConfig, rollupConfig } from '../constant/rollup.config';
 import { deployExec, deployService } from '../core/deployment';
 import Docker from 'dockerode';
@@ -210,8 +210,10 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   try {
+    const CURRENT_PATH = process.env.CURRENT_PATH || await runCommand('pwd');
+
     deployExec.rollup = exec(
-      `docker-compose -f docker-compose-all.yml --profile sequencer --profile blockscout --profile opstack-bridge up -d --build`,
+      `CURRENT_PATH=${CURRENT_PATH} docker-compose -f docker-compose-all.yml --profile sequencer --profile blockscout --profile opstack-bridge up -d --build`,
       { cwd: repoPath }
     );
 

@@ -1,3 +1,8 @@
+import { promisify } from 'util';
+import { exec } from 'child_process';
+
+const execPromise = promisify(exec);
+
 export const mergeDict = (dict1: any, dict2: any) => {
   const res = { ...dict1 };
   for (const key in dict2) {
@@ -26,3 +31,15 @@ export const createNewEnv = (newEnv: Record<string, any>) => {
   }
   return res;
 };
+
+export async function runCommand(command:string): Promise<string> {
+  try {
+    const { stdout, stderr } = await execPromise(command);
+    if (stderr) {
+      console.error('Error Output:', stderr);
+    }
+    return stdout;
+  } catch (error) {
+    console.error('Command failed:', error);
+  }
+}
