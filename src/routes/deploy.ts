@@ -117,6 +117,20 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
 
   fs.writeFileSync(envIndexerPath, newEnvIndexer);
 
+  // create deploy-override.json
+  const deployOverridePath = path.join(repoPath, 'deploy-override.json');
+  const deployOverride = {
+    finalizationPeriodSeconds: payload.finalizationPeriodSeconds,
+    l2OutputOracleSubmissionInterval: payload.l2OutputOracleSubmissionInterval,
+    l2BlockTime: payload.l2BlockTime,
+    governanceTokenSymbol: payload.governanceTokenSymbol,
+    governanceTokenName: payload.governanceTokenName,
+  };
+  fs.writeFileSync(deployOverridePath, JSON.stringify(deployOverride, null, 2));
+
+  const VITE_STATE_ROOT_PERIOD = payload.l2BlockTime * payload.l2OutputOracleSubmissionInterval;
+  const VITE_WITHDRAWAL_PERIOD = +payload.finalizationPeriodSeconds;
+
   // create bridge.env
   const envUiPath = path.join(repoPath, 'ui.env');
 
@@ -150,11 +164,14 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
     VITE_L1_STANDARD_BRIDGE_PROXY_ADDRESS: '0x',
     VITE_L1_CROSS_DOMAIN_MESSENGER_PROXY_ADDRESS: '0x',
     VITE_L1_ERC721_BRIDGE_ADDRESS_PROXY: '0x',
-    VITE_STATE_ROOT_PERIOD: 180,
-    VITE_WITHDRAWAL_PERIOD: 600,
+    VITE_STATE_ROOT_PERIOD,
+    VITE_WITHDRAWAL_PERIOD,
     VITE_L2_STANDARD_BRIDGE_PROXY_ADDRESS:
       '0x4200000000000000000000000000000000000010',
     VITE_API_ENDPOINT: domainList.OPSTACK_BRIDGE_INDEXER_SERVER,
+    VITE_WALLETCONNECT_PROJECT_ID: payload.WALLETCONNECT_PROJECT_ID,
+    VITE_L1_MULTI_CALL3_ADDRESS: payload.L1_MULTI_CALL3_ADDRESS,
+    VITE_L1_MULTI_CALL3_BLOCK_CREATED: payload.L1_MULTI_CALL3_BLOCK_CREATED,
   });
 
   fs.writeFileSync(envUiPath, newEnvUi);
