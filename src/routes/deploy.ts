@@ -20,7 +20,7 @@ const router = express.Router();
 const repoUrl: string = 'https://github.com/upnodedev/opstack-compose.git';
 const branchName: string = 'develop-full';
 const targetDir: string = path.join(__dirname, '../', '../', 'service');
-// 
+//
 
 router.get('/log/:name', requireJWTAuth, async (req, res) => {
   const name = req.params.name;
@@ -129,7 +129,8 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
   };
   fs.writeFileSync(deployOverridePath, JSON.stringify(deployOverride, null, 2));
 
-  const VITE_STATE_ROOT_PERIOD = payload.l2BlockTime * payload.l2OutputOracleSubmissionInterval;
+  const VITE_STATE_ROOT_PERIOD =
+    payload.l2BlockTime * payload.l2OutputOracleSubmissionInterval;
   const VITE_WITHDRAWAL_PERIOD = +payload.finalizationPeriodSeconds;
 
   // create bridge.env
@@ -307,6 +308,18 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
   }
 
   return res.status(200).json({ message: 'Rollup deployment started' });
+});
+
+router.get('/status', requireJWTAuth, async (req, res) => {
+  const services = await prisma.service.findFirst({
+    where: {
+      name: 'rollup',
+    },
+  });
+  if (services) {
+    return res.status(200).json({ status: services.status, deploy: true });
+  }
+  return res.status(200).json({ status: null, deploy: false });
 });
 
 export default router;
