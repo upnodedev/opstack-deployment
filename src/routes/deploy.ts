@@ -13,6 +13,7 @@ import Docker from 'dockerode';
 import { ethers } from 'ethers';
 import env from '../utils/env';
 import { EnumStatus } from '@prisma/client';
+import { getAllDockerPs } from '../core/container';
 
 const git: SimpleGit = simpleGit();
 const router = express.Router();
@@ -20,7 +21,6 @@ const router = express.Router();
 const repoUrl: string = 'https://github.com/upnodedev/opstack-compose.git';
 const branchName: string = 'develop-full';
 const targetDir: string = path.join(__dirname, '../', '../', 'service');
-//
 
 router.get('/log/:name', requireJWTAuth, async (req, res) => {
   const name = req.params.name;
@@ -320,6 +320,15 @@ router.get('/status', requireJWTAuth, async (req, res) => {
     return res.status(200).json({ status: services.status, deploy: true });
   }
   return res.status(200).json({ status: null, deploy: false });
+});
+
+router.get('/container', requireJWTAuth, async (req, res) => {
+  try {
+    const dockeList = await getAllDockerPs();
+    return res.status(200).json(dockeList);
+  } catch (error) {
+    return res.status(500).json({ message: 'Failed to get container list' });
+  }
 });
 
 export default router;

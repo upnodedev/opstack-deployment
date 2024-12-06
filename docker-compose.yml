@@ -8,7 +8,7 @@ services:
         USERNAME: ${USER_NAME}
         PASSWORD: ${USER_PASSWORD}
     image: traefik-envsubst
-    container_name: traefik
+    container_name: deployment-traefik
     restart: unless-stopped
     network_mode: host
     command:
@@ -24,6 +24,7 @@ services:
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock:ro'
   db:
+    container_name: deployment-db
     image: postgres:13
     restart: unless-stopped
     environment:
@@ -42,6 +43,7 @@ services:
       timeout: 5s
       retries: 5
   backend-main:
+    container_name: deployment-backend
     build:
       context: .
       dockerfile: Dockerfile
@@ -65,6 +67,7 @@ services:
       - '3050:3000'
     privileged: true
   frontend-main:
+    container_name: deployment-frontend
     build:
       context: .
       dockerfile: Dockerfile.frontend

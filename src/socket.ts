@@ -49,93 +49,55 @@ export const initWebSocketServer = (server: any) => {
 
         let containerId = null;
 
-        if (containerName.toString().toLowerCase() === 'all') {
-          console.log('Streaming logs for all containers');
-          const repoPath = path.join(
-            __dirname,
-            '../',
-            'service',
-            'opstack-compose'
-          );
+        docker.listContainers({ all: true }, async (err, containers) => {
+          if (err) {
+            console.error(err);
+            ws.send('Error fetching logs');
+            ws.close();
+            return;
+          }
+
+          const containerAll = containers.map((container) => {
+            return {
+              Id: container.Id,
+              Names: JSON.stringify(container.Names),
+            };
+          });
+
+          const containerFind = containerAll.find((container) => {
+            return JSON.stringify(container.Names).includes(containerName);
+          });
+
+          if (!containerFind) {
+            ws.send(`Service not found ${JSON.stringify(containerAll)}`);
+            // ws.close();
+            return;
+          }
+
+          containerId = containerFind.Id;
+          const container = docker.getContainer(containerId);
+
           try {
-            const cmd = `docker-compose -f ${path.join(
-              repoPath,
-              'docker-compose-all.yml'
-            )} logs -f`;
-            const dockerComposeLogs: ChildProcess = exec(cmd, {
-              cwd: repoPath,
+            // Stream logs from the Docker container
+            logStream = await container.logs({
+              follow: true,
+              stdout: true,
+              stderr: true,
             });
 
-            // Capture stdout (standard output)
-            dockerComposeLogs.stdout.on('data', async (data) => {
-              ws.send(data.toString());
+            logStream.on('data', (chunk) => {
+              ws.send(chunk.toString());
             });
 
-            // Capture stderr (error output)
-            dockerComposeLogs.stderr.on('data', async (data) => {
-              ws.send(data.toString());
-            });
-
-            // Handle process close event
-            dockerComposeLogs.on('close', async (code) => {
-              ws.send(`Process exited with code ${code}`);
+            logStream.on('end', () => {
+              ws.send('Log stream ended.');
               ws.close();
             });
           } catch (error) {
             console.error('Error streaming logs:', error.message);
             ws.send('Error streaming logs.');
           }
-        } else {
-          docker.listContainers({ all: true }, async (err, containers) => {
-            if (err) {
-              console.error(err);
-              ws.send('Error fetching logs');
-              ws.close();
-              return;
-            }
-
-            const containerAll = containers.map((container) => {
-              return {
-                Id: container.Id,
-                Names: JSON.stringify(container.Names),
-              };
-            });
-
-            const containerFind = containerAll.find((container) => {
-              return JSON.stringify(container.Names).includes(containerName);
-            });
-
-            if (!containerFind) {
-              ws.send(`Service not found ${JSON.stringify(containerAll)}`);
-              // ws.close();
-              return;
-            }
-
-            containerId = containerFind.Id;
-            const container = docker.getContainer(containerId);
-
-            try {
-              // Stream logs from the Docker container
-              logStream = await container.logs({
-                follow: true,
-                stdout: true,
-                stderr: true,
-              });
-
-              logStream.on('data', (chunk) => {
-                ws.send(chunk.toString());
-              });
-
-              logStream.on('end', () => {
-                ws.send('Log stream ended.');
-                ws.close();
-              });
-            } catch (error) {
-              console.error('Error streaming logs:', error.message);
-              ws.send('Error streaming logs.');
-            }
-          });
-        }
+        });
       });
 
       ws.on('close', () => {
