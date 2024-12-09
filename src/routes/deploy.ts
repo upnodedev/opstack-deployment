@@ -14,13 +14,17 @@ import { ethers } from 'ethers';
 import env from '../utils/env';
 import { EnumStatus } from '@prisma/client';
 import { getAllDockerPs } from '../core/container';
+import { promisify } from 'util';
 
 const git: SimpleGit = simpleGit();
 const router = express.Router();
+const execPromise = promisify(exec);
 
 const repoUrl: string = 'https://github.com/upnodedev/opstack-compose.git';
 const branchName: string = 'develop-full';
+const repoName = 'opstack-compose';
 const targetDir: string = path.join(__dirname, '../', '../', 'service');
+const repoPath = path.join(targetDir, repoName);
 
 router.get('/log/:name', requireJWTAuth, async (req, res) => {
   const name = req.params.name;
@@ -37,7 +41,6 @@ router.get('/log/:name', requireJWTAuth, async (req, res) => {
 router.post('/rollup', requireJWTAuth, async (req, res) => {
   const payload = req.body;
 
-  const repoName = 'opstack-compose';
   const repoPath = path.join(targetDir, repoName);
   const L1_RPC_URL = payload.L1_RPC_URL;
   const DOMAIN_NAME =
@@ -328,6 +331,92 @@ router.get('/container', requireJWTAuth, async (req, res) => {
     return res.status(200).json(dockeList);
   } catch (error) {
     return res.status(500).json({ message: 'Failed to get container list' });
+  }
+});
+
+router.post('/stop', requireJWTAuth, async (req, res) => {
+  const service = await prisma.service.findFirst({
+    where: {
+      name: 'rollup',
+    },
+  });
+
+  if (!service) {
+    return res.status(500).json({ message: 'Service not found' });
+  }
+
+  if (service.status !== EnumStatus.UP) {
+    return res.status(500).json({ message: `service ${service.status}` });
+  }
+
+  const CURRENT_PATH = process.env.CURRENT_PATH || (await runCommand('pwd'));
+
+  deployExec.rollup = exec(
+    `CURRENT_PATH=${CURRENT_PATH} docker-compose -f docker-compose-all.yml down`,
+    { cwd: repoPath }
+  );
+  try {
+    await execPromise(
+      `CURRENT_PATH=${CURRENT_PATH} docker-compose -f docker-compose-all.yml down`,
+      { cwd: repoPath }
+    );
+    console.log('✅ Docker Compose down command executed successfully.');
+
+    await prisma.service.update({
+      where: {
+        id: service.id,
+      },
+      data: {
+        status: EnumStatus.DOWN,
+      },
+    });
+    return res.status(200).json({ message: 'Service stopped' });
+  } catch (error) {
+    console.error('❌ Error executing Docker Compose up command:', error);
+    return res.status(500).json({ message: 'Failed to stop service' });
+  }
+});
+
+router.post('/start', requireJWTAuth, async (req, res) => {
+  const service = await prisma.service.findFirst({
+    where: {
+      name: 'rollup',
+    },
+  });
+
+  if (!service) {
+    return res.status(500).json({ message: 'Service not found' });
+  }
+
+  if (service.status !== EnumStatus.DOWN) {
+    return res.status(500).json({ message: `service ${service.status}` });
+  }
+
+  const CURRENT_PATH = process.env.CURRENT_PATH || (await runCommand('pwd'));
+
+  deployExec.rollup = exec(
+    `CURRENT_PATH=${CURRENT_PATH} docker-compose -f docker-compose-all.yml up -d`,
+    { cwd: repoPath }
+  );
+  try {
+    await execPromise(
+      `CURRENT_PATH=${CURRENT_PATH} docker-compose -f docker-compose-all.yml up -d`,
+      { cwd: repoPath }
+    );
+    console.log('✅ Docker Compose up command executed successfully.');
+
+    await prisma.service.update({
+      where: {
+        id: service.id,
+      },
+      data: {
+        status: EnumStatus.UP,
+      },
+    });
+    return res.status(200).json({ message: 'Service started' });
+  } catch (error) {
+    console.error('❌ Error executing Docker Compose up command:', error);
+    return res.status(500).json({ message: 'Failed to start service' });
   }
 });
 
