@@ -14,7 +14,7 @@ interface JwtPayload {
   exp: number;
 }
 
-let logStream: any;
+const activeLogStreams = new Map();
 
 // WebSocket server
 export const initWebSocketServer = (server: any) => {
@@ -31,84 +31,93 @@ export const initWebSocketServer = (server: any) => {
       return;
     }
 
-    try {
-      // Verify the JWT token
-      const payload = jwt.decode(token, env.JWT_SECRET, false) as JwtPayload;
+    // Verify the JWT token
+    const payload = jwt.decode(token, env.JWT_SECRET, false) as JwtPayload;
 
-      if (!payload || payload.sub !== env.USER) {
-        ws.send('Invalid token');
-        ws.close();
-        return;
-      }
-
-      ws.send(`Connected as ${payload.sub}`);
-
-      // Handle incoming messages
-      ws.on('message', async (containerName: string) => {
-        console.log(`Streaming logs for container: ${containerName}`);
-
-        let containerId = null;
-
-        docker.listContainers({ all: true }, async (err, containers) => {
-          if (err) {
-            console.error(err);
-            ws.send('Error fetching logs');
-            ws.close();
-            return;
-          }
-
-          const containerAll = containers.map((container) => {
-            return {
-              Id: container.Id,
-              Names: JSON.stringify(container.Names),
-            };
-          });
-
-          const containerFind = containerAll.find((container) => {
-            return JSON.stringify(container.Names).includes(containerName);
-          });
-
-          if (!containerFind) {
-            ws.send(`Service not found ${JSON.stringify(containerAll)}`);
-            // ws.close();
-            return;
-          }
-
-          containerId = containerFind.Id;
-          const container = docker.getContainer(containerId);
-
-          try {
-            // Stream logs from the Docker container
-            logStream = await container.logs({
-              follow: true,
-              stdout: true,
-              stderr: true,
-            });
-
-            logStream.on('data', (chunk) => {
-              ws.send(chunk.toString());
-            });
-
-            logStream.on('end', () => {
-              ws.send('Log stream ended.');
-              ws.close();
-            });
-          } catch (error) {
-            console.error('Error streaming logs:', error.message);
-            ws.send('Error streaming logs.');
-          }
-        });
-      });
-
-      ws.on('close', () => {
-        if (logStream) {
-          logStream.destroy();
-        }
-      });
-    } catch (error) {
-      console.error('Error connecting to WebSocket:', error.message);
-      ws.send('Error connecting to WebSocket.');
+    if (!payload || payload.sub !== env.USER) {
+      ws.send('Invalid token');
       ws.close();
+      return;
     }
+
+    ws.send(`Connected as ${payload.sub}`);
+
+    // Handle incoming messages
+    ws.on('message', async (containerName: string) => {
+      console.log(`Streaming logs for container: ${containerName}`);
+
+      let containerId = null;
+
+      docker.listContainers({ all: true }, async (err, containers) => {
+        if (err) {
+          console.error(err);
+          ws.send('Error fetching logs');
+          ws.close();
+          return;
+        }
+
+        const containerAll = containers.map((container) => {
+          return {
+            Id: container.Id,
+            Names: JSON.stringify(container.Names),
+          };
+        });
+
+        const containerFind = containerAll.find((container) => {
+          return JSON.stringify(container.Names).includes(containerName);
+        });
+
+        if (!containerFind) {
+          ws.send(`Service not found with name: ${containerName}`);
+          ws.close();
+          return;
+        }
+
+        containerId = containerFind.Id;
+
+        // Stop any previous log stream for this client
+        if (activeLogStreams.has(containerId)) {
+          const logStream = activeLogStreams.get(containerId);
+          activeLogStreams.delete(containerId);
+        }
+
+        // Start streaming logs for the requested service
+        await streamLogs(containerName, containerId, ws);
+      });
+    });
   });
 };
+
+// Function to stream logs from a Docker container
+async function streamLogs(containerName: string, containerId: string, ws) {
+  try {
+    const container = docker.getContainer(containerId);
+    const logStream = await container.logs({
+      follow: true,
+      stdout: true,
+      stderr: true,
+    });
+
+    logStream.on('data', (chunk) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(chunk.toString());
+      }
+    });
+
+    logStream.on('end', () => {
+      console.log(`Log stream for ${containerId} (${containerName}) ended`);
+    });
+
+    activeLogStreams.set(containerId, logStream);
+  } catch (err) {
+    console.error(
+      `Error streaming logs for ${containerId} (${containerName}):`,
+      err.message
+    );
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        `Error: Unable to fetch logs for service ${containerId} (${containerName})`
+      );
+    }
+  }
+}
