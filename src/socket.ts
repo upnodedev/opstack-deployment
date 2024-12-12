@@ -48,6 +48,11 @@ export const initWebSocketServer = (server: any) => {
 
       let containerId = null;
 
+      if (ws.readyState !== WebSocket.OPEN) {
+        console.error('WebSocket is not open, cannot process log request.');
+        return;
+      }
+
       docker.listContainers({ all: true }, async (err, containers) => {
         if (err) {
           console.error(err);
