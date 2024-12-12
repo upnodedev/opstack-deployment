@@ -41,7 +41,6 @@ router.get('/log/:name', requireJWTAuth, async (req, res) => {
 router.post('/rollup', requireJWTAuth, async (req, res) => {
   const payload = req.body;
 
-  const repoPath = path.join(targetDir, repoName);
   const L1_RPC_URL = payload.L1_RPC_URL;
   const DOMAIN_NAME =
     process.env.DOMAIN_NAME === 'localhost'
