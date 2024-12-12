@@ -345,10 +345,6 @@ router.post('/stop', requireJWTAuth, async (req, res) => {
     return res.status(500).json({ message: 'Service not found' });
   }
 
-  if (service.status !== EnumStatus.UP) {
-    return res.status(500).json({ message: `service ${service.status}` });
-  }
-
   const CURRENT_PATH = process.env.CURRENT_PATH || (await runCommand('pwd'));
 
   deployExec.rollup = exec(
@@ -386,10 +382,6 @@ router.post('/start', requireJWTAuth, async (req, res) => {
 
   if (!service) {
     return res.status(500).json({ message: 'Service not found' });
-  }
-
-  if (service.status !== EnumStatus.DOWN) {
-    return res.status(500).json({ message: `service ${service.status}` });
   }
 
   const CURRENT_PATH = process.env.CURRENT_PATH || (await runCommand('pwd'));
