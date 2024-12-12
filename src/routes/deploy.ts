@@ -347,10 +347,6 @@ router.post('/stop', requireJWTAuth, async (req, res) => {
 
   const CURRENT_PATH = process.env.CURRENT_PATH || (await runCommand('pwd'));
 
-  deployExec.rollup = exec(
-    `CURRENT_PATH=${CURRENT_PATH} docker-compose -f docker-compose-all.yml down`,
-    { cwd: repoPath }
-  );
   try {
     await execPromise(
       `CURRENT_PATH=${CURRENT_PATH} docker-compose -f docker-compose-all.yml down`,
@@ -386,10 +382,6 @@ router.post('/start', requireJWTAuth, async (req, res) => {
 
   const CURRENT_PATH = process.env.CURRENT_PATH || (await runCommand('pwd'));
 
-  deployExec.rollup = exec(
-    `CURRENT_PATH=${CURRENT_PATH} docker-compose -f docker-compose-all.yml up -d`,
-    { cwd: repoPath }
-  );
   try {
     await execPromise(
       `CURRENT_PATH=${CURRENT_PATH} docker-compose -f docker-compose-all.yml up -d`,
