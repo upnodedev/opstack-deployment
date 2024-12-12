@@ -90,6 +90,17 @@ export const initWebSocketServer = (server: any) => {
         await streamLogs(containerName, containerId, ws);
       });
     });
+
+    // Handle WebSocket close event
+    ws.on('close', () => {
+      console.log('WebSocket connection closed');
+      if (activeLogStreams.size > 0) {
+        activeLogStreams.forEach((logStream, containerId) => {
+          logStream.destroy();
+          activeLogStreams.delete(containerId);
+        });
+      }
+    });
   });
 };
 
