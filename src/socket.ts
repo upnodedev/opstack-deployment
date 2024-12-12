@@ -41,6 +41,7 @@ export const initWebSocketServer = (server: any) => {
     }
 
     ws.send(`Connected as ${payload.sub}`);
+    console.log(`WebSocket connection established for user: ${payload.sub}`);
 
     // Handle incoming messages
     ws.on('message', async (containerName: string) => {
