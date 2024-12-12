@@ -120,7 +120,7 @@ export const getAllDockerPs = async (): Promise<
   // get container id from docker ps (image, container id, name,status)
   const splitSting = '|~~|';
   const { stdout } = await execPromise(
-    `docker ps --format "{{.ID}}${splitSting}{{.Image}}${splitSting}{{.Names}}${splitSting}{{.Status}}"`
+    `docker ps --all --format "{{.ID}}${splitSting}{{.Image}}${splitSting}{{.Names}}${splitSting}{{.Status}}"`
   );
 
   const containerListString = stdout.split('\n');
