@@ -113,6 +113,7 @@ async function streamLogs(containerName: string, containerId: string, ws) {
       follow: true,
       stdout: true,
       stderr: true,
+      tail: 100,
     });
 
     logStream.on('data', (chunk) => {
