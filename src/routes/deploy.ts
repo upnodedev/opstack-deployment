@@ -97,6 +97,30 @@ router.post('/rollup', requireJWTAuth, async (req, res) => {
       : 'http://localhost:4242',
   };
 
+  // create grafana.env delete if exists
+  const envGrafanaPath = path.join(repoPath, 'grafana.env');
+  if (fs.existsSync(envGrafanaPath)) {
+    fs.rm(envGrafanaPath, { recursive: true, force: true }, (err) => {
+      if (err) {
+        return res
+          .status(500)
+          .json({ message: 'Failed to delete existing grafana.env' });
+      }
+    });
+  }
+  await new Promise((resolve) => setTimeout(resolve, 10));
+
+  const newEnvGrafana = createNewEnv({
+    GF_SECURITY_ADMIN_PASSWORD: payload.GF_SECURITY_ADMIN_PASSWORD,
+    GF_SECURITY_ADMIN_USER: payload.GF_SECURITY_ADMIN_USER,
+    GF_USERS_ALLOW_SIGN_UP: false,
+    GF_USERS_ALLOW_ORG_CREATE: false,
+    GF_AUTH_ANONYMOUS_ENABLED: false,
+    GF_AUTH_ANONYMOUS_ORG_ROLE: 'Viewer',
+  });
+
+  fs.writeFileSync(envGrafanaPath, newEnvGrafana);
+
   // create indexer.env
   const envIndexerPath = path.join(repoPath, 'indexer.env');
 
